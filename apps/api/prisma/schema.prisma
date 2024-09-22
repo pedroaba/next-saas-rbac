@@ -92,7 +92,7 @@ model Member {
   user   User   @relation(fields: [userId], references: [id])
   userId String @map("user_id")
 
-  @@index([organizationId, userId])
+  @@unique([organizationId, userId])
   @@map("members")
 }
 
