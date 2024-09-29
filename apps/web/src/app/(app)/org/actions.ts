@@ -1,9 +1,12 @@
 'use server'
 
 import { HTTPError } from 'ky'
+import { revalidateTag } from 'next/cache'
 import { z } from 'zod'
 
+import { getCurrentOrg } from '@/auth/auth'
 import { createOrganization } from '@/http/create-organization'
+import { updateOrganization } from '@/http/update-organization'
 
 const organizationSchema = z
   .object({
@@ -46,6 +49,8 @@ const organizationSchema = z
     },
   )
 
+export type OrganizationSchema = z.infer<typeof organizationSchema>
+
 export async function createOrganizationAction(data: FormData) {
   const result = organizationSchema.safeParse(Object.fromEntries(data))
   if (!result.success) {
@@ -64,6 +69,55 @@ export async function createOrganizationAction(data: FormData) {
       shouldAttachUsersByDomain,
       domain,
     })
+
+    revalidateTag('organizations')
+  } catch (error) {
+    if (error instanceof HTTPError) {
+      const { message } = await error.response.json()
+
+      return {
+        success: false,
+        message,
+        errors: null,
+      }
+    }
+
+    return {
+      success: false,
+      message: 'Unexpected error, try again in a few minutes.',
+      errors: null,
+    }
+  }
+
+  return {
+    success: true,
+    message: 'Successfully saved the organization.',
+    errors: null,
+  }
+}
+
+export async function updateOrganizationAction(data: FormData) {
+  const currentOrg = getCurrentOrg()
+  const result = organizationSchema.safeParse(Object.fromEntries(data))
+  if (!result.success) {
+    const errors = result.error.flatten().fieldErrors
+    return {
+      success: false,
+      message: null,
+      errors,
+    }
+  }
+
+  const { shouldAttachUsersByDomain, domain, name } = result.data
+  try {
+    await updateOrganization({
+      org: currentOrg!,
+      name,
+      shouldAttachUsersByDomain,
+      domain,
+    })
+
+    revalidateTag('organizations')
   } catch (error) {
     if (error instanceof HTTPError) {
       const { message } = await error.response.json()
