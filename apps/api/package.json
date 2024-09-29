@@ -5,6 +5,8 @@
     "dev": "pnpm env:load tsx watch src/http/server.ts",
     "db:migrate": "pnpm env:load prisma migrate dev",
     "db:studio": "pnpm env:load prisma studio",
+    "build": "tsc",
+    "start": "node dist/http/server.js",
     "env:load": "dotenv -e ../../.env --"
   },
   "devDependencies": {
@@ -19,6 +21,7 @@
     "dotenv-cli": "^7.4.2",
     "prisma": "^5.17.0",
     "ts-node": "^10.9.2",
+    "tsup": "^8.3.0",
     "tsx": "^4.16.2",
     "typescript": "^5.5.3"
   },
